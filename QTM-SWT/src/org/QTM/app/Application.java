@@ -15,6 +15,7 @@ import org.QTM.control.IconCache;
 import org.QTM.control.LiveSashForm;
 import org.QTM.control.ToolTip;
 import org.QTM.control.ToolTipHandler;
+import org.QTM.data.HintNewPlayer;
 import org.QTM.data.HintRemovedPlayer;
 import org.QTM.data.Player;
 import org.QTM.data.Result;
@@ -339,7 +340,8 @@ public class Application implements Observer, DisposeListener {
 			}
 
 			public void focusLost(FocusEvent e) {
-				controller.changeTournamentLocation(field_TournamentLocation.getText());
+				String s = field_TournamentLocation.getText();
+				controller.getCurrentTournament().setLocation(s);
 				
 				// TODO does not work on press of toolbar button?!?
 			}
@@ -517,8 +519,7 @@ public class Application implements Observer, DisposeListener {
 		
 		tool_NewTournament.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
-				controller.newTournament(sShell);
-				controller.getCurrentTournament().addObserver(app);
+				controller.newTournament(sShell, app);
 			}
 
 			public void widgetDefaultSelected(SelectionEvent e) {
@@ -530,21 +531,7 @@ public class Application implements Observer, DisposeListener {
 		tool_OpenTournament.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
 
-				controller.openTournament(sShell);
-			}
-
-			public void widgetDefaultSelected(SelectionEvent e) {
-			}
-		});
-
-		ToolItem tool_SaveTournament = new ToolItem(toolBar1, SWT.PUSH);
-		tool_SaveTournament.setText("Save");
-		tool_SaveTournament.addSelectionListener(new SelectionListener() {
-			public void widgetSelected(SelectionEvent e) {
-
-				// TODO find control with focus and update data?
-
-				controller.saveTournament(sShell);
+				controller.openTournament(sShell, app);
 			}
 
 			public void widgetDefaultSelected(SelectionEvent e) {
@@ -813,8 +800,7 @@ public class Application implements Observer, DisposeListener {
 	private void updatePlayers(Tournament t, Object hint) {
 		if( hint instanceof HintRemovedPlayer)
 		{
-			HintRemovedPlayer hp = (HintRemovedPlayer)hint;
-			Player p = hp.getPlayer();
+			Player p = ((HintRemovedPlayer)hint).getPlayer();
 			
 			TableItem[] oldItems = tablePlayer.getItems();
 			for (int i = 0; i < oldItems.length; i++) {
@@ -824,6 +810,16 @@ public class Application implements Observer, DisposeListener {
 				}
 			}
 			
+		} else if (hint instanceof HintNewPlayer) // added player
+		{
+			Player p = ((HintNewPlayer) hint).getPlayer();
+			TableItem ti = new TableItem(tablePlayer, SWT.NULL);
+			ti.setData(p);
+			tablePlayer.setSelection(tablePlayer.getItemCount() - 1);
+
+			String[] values = { p.getName(), Integer.toString(p.getDCI()) };
+			ti.setText(values);
+
 		} else if (hint instanceof Player) // added/changed this player
 		{
 			Player p = (Player) hint;
@@ -838,9 +834,9 @@ public class Application implements Observer, DisposeListener {
 			}
 
 			if (ti == null) {
-				ti = new TableItem(tablePlayer, SWT.NULL);
-				ti.setData(p);
-				tablePlayer.setSelection(tablePlayer.getItemCount() - 1);
+				// something wrong here
+				System.out.println("Missing player in table!");
+				return;
 			}
 
 			String[] values = { p.getName(), Integer.toString(p.getDCI()) };
@@ -907,8 +903,7 @@ public class Application implements Observer, DisposeListener {
 	private void updateStandings(Tournament t, Object hint) {
 		if( hint instanceof HintRemovedPlayer)
 		{
-			HintRemovedPlayer hp = (HintRemovedPlayer)hint;
-			Player p = hp.getPlayer();
+			Player p = ((HintRemovedPlayer)hint).getPlayer();
 			
 			TableItem[] oldItems = tableStandings.getItems();
 			boolean removed = false;
@@ -923,6 +918,25 @@ public class Application implements Observer, DisposeListener {
 					playerItems(oldItems[i], fp, i);					
 				}
 			}
+		} else if (hint instanceof HintNewPlayer)
+		{
+			Player p = ((HintNewPlayer)hint).getPlayer();
+
+			int rank = controller.getCurrentTournament().getPlayerRank(p);
+			TableItem ti = new TableItem(tableStandings, SWT.NULL, rank - 1);				
+
+			playerItems(ti, p, rank);
+
+			// fix all other players rank
+			TableItem[] oldItems = tableStandings.getItems();
+			for (int i = 0; i < oldItems.length; i++) {
+				Player fp = (Player) oldItems[i].getData();
+				
+				if(fp != p)
+					playerItems(oldItems[i], fp, i+1);
+			}
+
+			updateStandingsTitle();
 		} else if (hint instanceof Player)
 		{
 			Player p = (Player) hint;
@@ -937,12 +951,14 @@ public class Application implements Observer, DisposeListener {
 				}
 			}
 
-			int rank = controller.getCurrentTournament().getPlayerRank(p);
 			if(ti == null)
 			{
-				ti = new TableItem(tableStandings, SWT.NULL, rank - 1);				
+				System.out.println("Missing player in standings table");
+				return;
 			}
-			else if(i != rank-1)
+			
+			int rank = controller.getCurrentTournament().getPlayerRank(p);
+			if(i != rank-1)
 			{	
 				ti.dispose();
 				ti = new TableItem(tableStandings, SWT.NULL, rank - 1);

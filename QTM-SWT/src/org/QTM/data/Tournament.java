@@ -27,6 +27,7 @@ public class Tournament extends Observable {
 	List players = new ArrayList();
 	
 	public Tournament() {
+		super();
 	}
 
 	public Date getDate() {
@@ -44,9 +45,13 @@ public class Tournament extends Observable {
 	}
 
 	public void setLocation(String location) {
-		this.location = location;
-		setChanged();
-		notifyObservers(new HintTournamentLocation(this.location));
+		if(this.location == null || !this.location.equals(location))
+		{
+			this.location = location;
+			setChanged();
+			notifyObservers(new HintTournamentLocation(this.location));
+	
+		}
 	}
 
 	public String getName() {
@@ -54,10 +59,14 @@ public class Tournament extends Observable {
 	}
 
 	public void setName(String name) {
-		this.name = name;
-		setChanged();
-		
-		notifyObservers( new HintTournamentName(this.name) );
+		if(this.name == null || !this.name.equals(name))
+		{
+			this.name = name;
+			setChanged();
+			
+			notifyObservers( new HintTournamentName(this.name) );
+
+		}
 	}
 
 	public List getPlayersRanked() {
@@ -98,7 +107,7 @@ public class Tournament extends Observable {
 		players.add(p);
 		
 		setChanged();
-		notifyObservers(p);
+		notifyObservers( new HintNewPlayer(p) );
 	}
 
 	public void removePlayer(Player p) {
@@ -186,7 +195,9 @@ public class Tournament extends Observable {
 		else
 			s.unfinished();
 		
-		notifyObservers(s);
+		notifyObservers( s );
+		notifyObservers( s.getPlayer1() );
+		notifyObservers( s.getPlayer2() );
 		notifyObservers( getCurrentRound() );
 	}
 

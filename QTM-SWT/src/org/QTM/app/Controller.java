@@ -4,7 +4,6 @@
  */
 package org.QTM.app;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Observer;
 import java.util.Timer;
@@ -14,10 +13,7 @@ import net.sf.jasperreports.engine.JasperPrint;
 
 import org.QTM.control.JasperViewDialog;
 import org.QTM.control.OpenDialog;
-import org.QTM.data.Player;
 import org.QTM.data.Result;
-import org.QTM.data.Round;
-import org.QTM.data.Seating;
 import org.QTM.data.Tournament;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.preference.PreferenceStore;
@@ -26,159 +22,104 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
-import com.db4o.Db4o;
-import com.db4o.ObjectContainer;
-import com.db4o.ObjectSet;
-import com.db4o.query.Query;
-
 /**
  * @author WAHL_O
- * 
+ *  
  */
 public class Controller {
 
-	private Tournament tournament;
+	Tournament tournament = null;
 
-	ObjectContainer db;
+	PreferenceStore preferences;
 
-	private PreferenceStore preferences;
+	Timer timer = null;
 
-	private Timer timer = null;
+	ItemFactory factory;
 
 	public Controller(PreferenceStore p) {
 		preferences = p;
 
-		Db4o.configure().objectClass(Tournament.class).cascadeOnUpdate(true);
-		Db4o.configure().objectClass(Tournament.class).cascadeOnActivate(true);
-		Db4o.configure().objectClass(Tournament.class).updateDepth(2);
-		Db4o.configure().objectClass(Tournament.class).objectField("changed").queryEvaluation(false);
-		Db4o.configure().objectClass(Tournament.class).objectField("obs").queryEvaluation(false);
-		Db4o.configure().objectClass(Tournament.class).objectField("changed").cascadeOnUpdate(false);
-		Db4o.configure().objectClass(Tournament.class).objectField("obs").cascadeOnUpdate(false);
-		
-		Db4o.configure().objectClass(Player.class).cascadeOnActivate(true);
-		Db4o.configure().objectClass(Player.class).cascadeOnUpdate(true);
+		factory = new ItemFactory();
 
-		Db4o.configure().objectClass(Round.class).cascadeOnActivate(true);
-		Db4o.configure().objectClass(Round.class).cascadeOnUpdate(true);
-
-		Db4o.configure().objectClass(Seating.class).cascadeOnActivate(true);
-		Db4o.configure().objectClass(Seating.class).cascadeOnUpdate(true);
-
-		Db4o.configure().activationDepth(1);
-		Db4o.configure().exceptionsOnNotStorable(true);
-		
-		tournament = new Tournament();
-
-		// TODO remove after debugging
-		Db4o.configure().messageLevel(5);
-		
-		db = Db4o.openFile(PreferenceLoader.getPreferenceStore().getString("tournamentDB"));
-
+		tournament = factory.createTournament();
 	}
 
 	public void dispose() {
-		db.close();
+		factory.dispose();
 	}
 
-	public void newTournament(Shell shell) {
-		db.deactivate(tournament, Integer.MAX_VALUE);
+	public void newTournament(Shell shell, Observer o) {
+		factory.giveBack(tournament);
 		
-		tournament = new Tournament();
+		tournament = factory.createTournament();
+		
+		tournament.addObserver(o);
+		o.update(tournament, tournament);
 	}
 
-	public void openTournament(Shell shell) {
-		List names = new ArrayList();
 
-		Query q = db.query();
-		q.constrain(Tournament.class);
-		q.orderAscending();
-		
-		ObjectSet set = q.execute();
-
-		while (set.hasNext()) {
-			Tournament t = (Tournament) set.next();
-			names.add(t.getName());
-		}
+	public void openTournament(Shell shell, Observer o) {
+		List names = factory.queryTournament();
 
 		OpenDialog dlg = new OpenDialog(shell, names);
-		
-		if( dlg.open() == IDialogConstants.CANCEL_ID) 
+
+		if (dlg.open() == IDialogConstants.CANCEL_ID)
 			return;
-		
+
 		String selected = dlg.getSelection();
-		
-		q.descend("name").constrain(selected);
-		set = q.execute();
-		
-		if(set.hasNext())
-		{
-			db.deactivate(tournament, Integer.MAX_VALUE);
-			
-			tournament = (Tournament) set.next();
-			
-			db.activate(tournament, Integer.MAX_VALUE);			
-		}
-	}
 
-	// TODO add auto-save!
-	public void saveTournament(Shell shell) {
-		db.set(tournament);
-
-		tournament.notifyObservers(tournament);
-	}
-
-	public void changeTournamentLocation(String s) {
-		if (!s.equals(tournament.getLocation())) {
-			tournament.setLocation(s);
-
-			tournament.notifyObservers(tournament);
-		}
+		factory.giveBack(tournament);
+		tournament = factory.getTournament(selected);
+		tournament.addObserver(o);
+		o.update(tournament, tournament);
 	}
 
 	// TODO cache final standings per round and offer to print them
 	// TODO autogenerate after round has been finalized
 	// TOOD remove from cache after round reset to non finalized!
 	public void printCurrentStandings(Shell shell) {
-		ReportGenerator plp = new ReportGenerator("Standings", preferences.getString("standingsReport") );
-				
-		JasperPrint jasperPrint = plp.print(tournament, tournament.getPlayersRanked());
-		
-		if(jasperPrint != null)
-		{
+		ReportGenerator plp = new ReportGenerator("Standings", preferences
+				.getString("standingsReport"));
+
+		JasperPrint jasperPrint = plp.print(tournament, tournament
+				.getPlayersRanked());
+
+		if (jasperPrint != null) {
 			JasperViewDialog jvd = new JasperViewDialog(shell, jasperPrint);
 			jvd.open();
 		}
 	}
 
 	public void printResultSlips(Shell shell) {
-		ReportGenerator plp = new ReportGenerator("ResultSlips", preferences.getString("resultSlipsReport") );
-				
-		JasperPrint jasperPrint = plp.print(tournament, tournament.getCurrentRound().getCompleteSeatings() );
+		ReportGenerator plp = new ReportGenerator("ResultSlips", preferences
+				.getString("resultSlipsReport"));
 
-		if(jasperPrint != null)
-		{
+		JasperPrint jasperPrint = plp.print(tournament, tournament
+				.getCurrentRound().getCompleteSeatings());
+
+		if (jasperPrint != null) {
 			JasperViewDialog jvd = new JasperViewDialog(shell, jasperPrint);
 			jvd.open();
 		}
 	}
 
 	public void printSeatings(Shell shell) {
-		ReportGenerator plp = new ReportGenerator("Seatings", preferences.getString("seatingsReport") );
-				
-		JasperPrint jasperPrint = plp.print(tournament, tournament.getCurrentRound().getSortedSeatings());
-		
-		if(jasperPrint != null)
-		{
+		ReportGenerator plp = new ReportGenerator("Seatings", preferences
+				.getString("seatingsReport"));
+
+		JasperPrint jasperPrint = plp.print(tournament, tournament
+				.getCurrentRound().getSortedSeatings());
+
+		if (jasperPrint != null) {
 			JasperViewDialog jvd = new JasperViewDialog(shell, jasperPrint);
 			jvd.open();
 		}
 	}
 
 	public void nextRound(Shell shell) {
-		if( tournament.nextRound() == null)
-		{
-			MessageBox messageBox = new MessageBox(shell, SWT.OK | SWT.ICON_WARNING);
+		if (tournament.nextRound() == null) {
+			MessageBox messageBox = new MessageBox(shell, SWT.OK
+					| SWT.ICON_WARNING);
 			messageBox.setMessage("Seating is not possible.");
 			messageBox.open();
 		}
@@ -186,11 +127,11 @@ public class Controller {
 
 	class RoundTimerTask extends TimerTask {
 		private Display display;
-		
+
 		private long startTime;
-		
+
 		private Observer obs;
-		
+
 		public RoundTimerTask(Display d, Observer o) {
 			super();
 			display = d;
@@ -202,70 +143,58 @@ public class Controller {
 			if (!display.isDisposed()) {
 				display.asyncExec(new Runnable() {
 					public void run() {
-						obs.update(tournament, new HintElapsedRoundTime(System.currentTimeMillis() - startTime));
+						obs.update(tournament, new HintElapsedRoundTime(System
+								.currentTimeMillis()
+								- startTime));
 					}
 				});
 			}
 		}
 	}
-	
+
 	public void startRound(Shell shell, Observer o) {
-		if(timer == null)
-		{
-	        timer = new Timer();
-	        timer.schedule(new RoundTimerTask( shell.getDisplay(), o ),
-		               1000,   // initial delay
-		               1000);  // subsequent rate
+		if (timer == null) {
+			timer = new Timer();
+			timer.schedule(new RoundTimerTask(shell.getDisplay(), o), 1000, // initial
+																			// delay
+					1000); // subsequent rate
 		}
 	}
 
 	public void stopRound(Shell shell, Observer o) {
-		
-		if(timer != null)
-		{
-	        timer.cancel();
-	        timer = null;
-	        
-	        o.update(tournament, new HintElapsedRoundTime(0) );
+
+		if (timer != null) {
+			timer.cancel();
+			timer = null;
+
+			o.update(tournament, new HintElapsedRoundTime(0));
 		}
 	}
-	
+
 	public boolean isRoundClockRunning() {
 		return timer != null;
 	}
 
-	static Result[] best_of_three =  {
-			// P1 wins
-			new Result(1,0,0),
-			new Result(2,0,0),
-			new Result(2,1,0),
-			
+	static Result[] best_of_three = {
+	// P1 wins
+			new Result(1, 0, 0), new Result(2, 0, 0), new Result(2, 1, 0),
+
 			// P2 wins
-			new Result(0,1,0),
-			new Result(0,2,0),
-			new Result(1,2,0),
-			
+			new Result(0, 1, 0), new Result(0, 2, 0), new Result(1, 2, 0),
+
 			// draws
-			new Result(0,0,0),
-			new Result(1,1,0),
+			new Result(0, 0, 0), new Result(1, 1, 0),
 
 			// P1 wins after drawn game
-			new Result(1,0,1),
-			new Result(1,0,2),
-			new Result(2,0,1),
+			new Result(1, 0, 1), new Result(1, 0, 2), new Result(2, 0, 1),
 
 			// P2 wins after drawn game
-			new Result(0,1,1),
-			new Result(0,1,2),
-			new Result(0,2,1),
-			
+			new Result(0, 1, 1), new Result(0, 1, 2), new Result(0, 2, 1),
+
 			// draws after drawn game
-			new Result(0,0,1),
-			new Result(0,0,2),
-			new Result(0,0,3),
-			new Result(1,1,1),
-	};
-	
+			new Result(0, 0, 1), new Result(0, 0, 2), new Result(0, 0, 3),
+			new Result(1, 1, 1), };
+
 	public String[] getPrintableTournamentResults() {
 		// generate Best-of-3 results
 		String[] results = new String[best_of_three.length];
@@ -283,4 +212,5 @@ public class Controller {
 	public Tournament getCurrentTournament() {
 		return tournament;
 	}
+
 }

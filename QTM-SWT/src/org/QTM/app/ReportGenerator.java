@@ -41,28 +41,28 @@ public class ReportGenerator {
 		JasperPrint jasperPrint = null;
 		try {
 			// First, load JasperDesign from XML and compile it into JasperReport
-			InputStream stream = ReportGenerator.class.getResourceAsStream(reportFile);
+			final InputStream stream = ReportGenerator.class.getResourceAsStream(reportFile);
 			if(stream == null)
 				return null;
 			
-			JasperReport jasperReport = (JasperReport) JRLoader.loadObject(stream);
+			final JasperReport jasperReport = (JasperReport) JRLoader.loadObject(stream);
 			if(jasperReport == null)
 				return null;
 
 			// Second, create a map of parameters to pass to the report.
-			Map parameters = new HashMap();
+			final Map parameters = new HashMap();
 			parameters.put("JobName", jobName );
 			parameters.put("TournamentName", t.getName());
 			parameters.put("TournamentLocation", t.getLocation());
 			parameters.put("TournamentDate", t.getDate());
 			
-			Round round = t.getCurrentRound();
+			final Round round = t.getCurrentRound();
 			parameters.put("Final", new Boolean(round.isFinished()));
 			
-			if(round != null)
-				parameters.put("CurrentRound", new Integer(round.getRound()));
-			else
+			if(round == null)
 				parameters.put("CurrentRound", new Integer(0));
+			else
+				parameters.put("CurrentRound", new Integer(round.getRound()));
 			
 			// Fourth, create JasperPrint using fillReport() method
 			jasperPrint = JasperFillManager.fillReport( jasperReport, parameters, new ListDataSource(l) );
@@ -89,7 +89,7 @@ public class ReportGenerator {
 
 			if( iterator.hasNext() )
 			{
-				Object o = iterator.next();
+				final Object o = iterator.next();
 
 				player = null;
 				seating = null;
