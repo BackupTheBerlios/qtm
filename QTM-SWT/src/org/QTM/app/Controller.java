@@ -20,6 +20,7 @@ import org.QTM.data.Round;
 import org.QTM.data.Seating;
 import org.QTM.data.Tournament;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.preference.PreferenceStore;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
@@ -41,11 +42,11 @@ public class Controller {
 
 	ObjectContainer db;
 
-	private Preferences preferences;
+	private PreferenceStore preferences;
 
 	private Timer timer = null;
 
-	public Controller(Preferences p) {
+	public Controller(PreferenceStore p) {
 		preferences = p;
 
 		Db4o.configure().objectClass(Tournament.class).cascadeOnUpdate(true);
@@ -68,7 +69,8 @@ public class Controller {
 
 		// TODO remove after debugging
 		Db4o.configure().messageLevel(5);
-		db = Db4o.openFile(preferences.TOURNAMENT_DB_PFILENAME);
+		
+		db = Db4o.openFile(PreferenceLoader.getPreferenceStore().getString("tournamentDB"));
 
 	}
 
@@ -219,7 +221,7 @@ public class Controller {
 	}
 
 	public void printCurrentStandings(Shell shell) {
-		ReportGenerator plp = new ReportGenerator("Standings", preferences.STANDING_REPORT_PFILENAME );
+		ReportGenerator plp = new ReportGenerator("Standings", preferences.getString("standingsReport") );
 				
 		JasperPrint jasperPrint = plp.print(tournament, tournament.getPlayersRanked());
 		
@@ -231,7 +233,7 @@ public class Controller {
 	}
 
 	public void printResultSlips(Shell shell) {
-		ReportGenerator plp = new ReportGenerator("ResultSlips", preferences.RESULTSLIPS_REPORT_PFILENAME );
+		ReportGenerator plp = new ReportGenerator("ResultSlips", preferences.getString("resultSlipsReport") );
 				
 		JasperPrint jasperPrint = plp.print(tournament, tournament.getCurrentRound().getCompleteSeatings() );
 
@@ -243,7 +245,7 @@ public class Controller {
 	}
 
 	public void printSeatings(Shell shell) {
-		ReportGenerator plp = new ReportGenerator("Seatings", preferences.SEATING_REPORT_PFILENAME );
+		ReportGenerator plp = new ReportGenerator("Seatings", preferences.getString("seatingsReport") );
 				
 		JasperPrint jasperPrint = plp.print(tournament, tournament.getCurrentRound().getSortedSeatings());
 		

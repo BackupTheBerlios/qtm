@@ -18,12 +18,16 @@ import org.QTM.data.Result;
 import org.QTM.data.Round;
 import org.QTM.data.Seating;
 import org.QTM.data.Tournament;
+import org.eclipse.jface.preference.PreferenceConverter;
+import org.eclipse.jface.preference.PreferenceStore;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.MenuAdapter;
@@ -68,7 +72,7 @@ import org.eclipse.swt.widgets.ToolItem;
 // TODO Convert to JFace TableViewer/Handling
 // TODO Change to JfaceForms?
 
-public class Application implements ITournamentListener {
+public class Application implements ITournamentListener, DisposeListener {
 	private Controller controller;
 
 	private Shell sShell = null; //  @jve:decl-index=0:visual-constraint="10,10"
@@ -106,21 +110,8 @@ public class Application implements ITournamentListener {
 		controller.addListener(this);
 	}
 
-	public void dispose() {
-		// de-register from all listeners
-		controller.removeListener(this);
-		
-		colorOrange.dispose();
-		colorRed.dispose();
-		
-		sShell.dispose();
-	}
-
 	void run() {
-		//		sShell.pack();
 		sShell.open();
-
-		center();
 
 		while (!sShell.isDisposed()) {
 			if (!display.readAndDispatch())
@@ -148,11 +139,32 @@ public class Application implements ITournamentListener {
 
 		createComposite();
 
-		sShell.setText("QTM SWT");
+		sShell.setText(VersionInfo.getName()+ " " + VersionInfo.getVersion());
 		sShell.setImage(IconCache.getImage(display, "Q Bubble 16x16.gif"));
 		
-		// TODO restore size from preferences
-		sShell.setSize(new org.eclipse.swt.graphics.Point(480, 320));
+		restoreWindowBounds();
+		
+		sShell.addDisposeListener(this);
+	}
+	
+	  public void restoreWindowBounds() {
+		Rectangle rect = PreferenceLoader.loadRectangle("windowBounds");
+
+		if (rect == null) {
+			center();
+			return;
+		}
+		Rectangle bounds = display.getBounds();
+		Rectangle intersect = rect.intersection(bounds);
+
+		if (intersect.height < 50 || intersect.width < 50) {
+			center();
+			return;
+		}
+		sShell.setBounds(intersect);
+
+		if (PreferenceLoader.loadBoolean("windowMaximized"))
+			sShell.setMaximized(true);
 	}
 
 	private void createComposite() {
@@ -758,11 +770,6 @@ public class Application implements ITournamentListener {
 		});
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.QTM.app.ITournamentListener#update()
-	 */
 	public void update(Tournament t, Object hint) {
 		if (hint instanceof HintDirtyFlag || hint instanceof Tournament) {
 			String name = t.getName();
@@ -1478,5 +1485,24 @@ public class Application implements ITournamentListener {
 			}
 
 		});
+	}
+
+	 private void saveWindowBounds() {
+		PreferenceStore p = PreferenceLoader.getPreferenceStore();
+
+		PreferenceConverter.setValue(p, "windowBounds", sShell.getBounds());
+		p.setValue("windowMaximized", sShell.getMaximized());
+	}
+	 
+	public void widgetDisposed(DisposeEvent e) {
+	    saveWindowBounds();
+
+	    controller.removeListener(this);
+
+		colorOrange.dispose();
+		colorRed.dispose();
+		
+	    PreferenceLoader.saveStore();
+	    PreferenceLoader.cleanUp();
 	}
 }

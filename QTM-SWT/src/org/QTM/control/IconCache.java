@@ -31,6 +31,9 @@ public class IconCache {
 	private IconCache() {
 	}
 
+	public static void initialize() {
+	}
+
 	static public void dispose() {
 
 		Iterator it = images.values().iterator();
@@ -68,4 +71,5 @@ public class IconCache {
 		}
 		return null;
 	}
+
 }

@@ -4,8 +4,17 @@
  */
 package org.QTM.app;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+
 import org.QTM.control.IconCache;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
 
 /**
  * @author WAHL_O
@@ -32,21 +41,69 @@ public class Startup {
 		
 		
 		final Display display = new Display();
-		
-		// TODO load preferences from file
-		
-		Preferences preferences = new Preferences(); 
-		Controller controller = new Controller(preferences);
+        boolean running = false;
+
+        runSingleInstance(display);
+        
+		initializeResources();
+
+		Controller controller = new Controller(PreferenceLoader.getPreferenceStore());
 		Application application = new Application(display, controller);
 		application.createSShell();
 		application.run();
 
-		// TODO save position to preferences 
-		
 		IconCache.dispose();
-		application.dispose();
 		controller.dispose();
-		display.dispose();
+		
+		exit(display, 0);
 	}
 
+	private static void exit(Display display, int errorCode) {
+		if (display != null && !display.isDisposed())
+			display.dispose();
+
+		System.exit(errorCode);
+	}
+	
+	private static void runSingleInstance(Display display) {
+        File ourLockFile = new File(VersionInfo.getHomeDirectory() + ".lock");
+        boolean running = ourLockFile.exists();
+
+        if (running) {
+            MessageBox alreadyRunning = new MessageBox(new Shell(display), SWT.YES | SWT.ICON_ERROR);
+            alreadyRunning.setText(VersionInfo.getName());
+            alreadyRunning.setMessage(VersionInfo.getName() + " " + VersionInfo.getVersion() + " is already runnning.");
+
+            alreadyRunning.open();
+            exit(display, 1);
+          }
+
+        if (!running) {
+          FileOutputStream out;
+
+          try {
+            out = new FileOutputStream(ourLockFile);
+            PrintStream p = new PrintStream(out);
+
+            p.close();
+            out.close();
+            ourLockFile.deleteOnExit();
+
+          } catch (FileNotFoundException fnf) {
+          } catch (IOException io) {
+          }
+        }
+	}
+
+	private static void initializeResources() {
+	    try {
+	      PreferenceLoader.initialize();
+	    } catch (IOException e) {
+	      e.printStackTrace();
+	      System.exit(2);
+	    }
+
+	    IconCache.initialize();
+	    PreferenceLoader.initialize2();
+	  }
 }
