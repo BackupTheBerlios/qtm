@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created using an evaluation version of JasperAssistant (http://www.jasperassistant.com) -->
+<!DOCTYPE jasperReport PUBLIC "-//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+
+<jasperReport name="Standings" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="30" bottomMargin="30">
+	<property name="com.jasperassistant.designer.Rulers" value="true"/>
+	<property name="com.jasperassistant.designer.GridWidth" value="12"/>
+	<property name="com.jasperassistant.designer.GridHeight" value="12"/>
+	<property name="com.jasperassistant.designer.SnapToGrid" value="false"/>
+	<property name="com.jasperassistant.designer.Margins" value="true"/>
+	<property name="ireport.scriptlethandling" value="2"/>
+	<property name="com.jasperassistant.designer.Grid" value="true"/>
+	<property name="com.jasperassistant.designer.SnapToGuides" value="true"/>
+	<reportFont name="Verdana" isDefault="true" fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+	<parameter name="TournamentName" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[Name of printed tournament]]></parameterDescription>
+		<defaultValueExpression><![CDATA["Don't know"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="TournamentDate" class="java.util.Date" isForPrompting="false">
+		<defaultValueExpression><![CDATA[new Date()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CurrentRound" class="java.lang.Integer" isForPrompting="false">
+	</parameter>
+	<field name="Player1Name" class="java.lang.String">
+		<fieldDescription><![CDATA[Player name]]></fieldDescription>
+	</field>
+	<field name="Player2Name" class="java.lang.String">
+		<fieldDescription><![CDATA[Player name]]></fieldDescription>
+	</field>
+	<field name="Table" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Table]]></fieldDescription>
+	</field>
+	<field name="Player1MatchPoints" class="java.lang.Integer">
+	</field>
+	<field name="Player2MatchPoints" class="java.lang.Integer">
+	</field>
+	<group name="OddRow">
+		<groupExpression><![CDATA[$V{REPORT_COUNT}.intValue() % 2 == 1 ? Boolean.TRUE : Boolean.FALSE]]></groupExpression>
+		<groupHeader>
+		<band height="29">
+			<printWhenExpression><![CDATA[$V{REPORT_COUNT}.intValue() % 2 == 1 ? Boolean.TRUE : Boolean.FALSE]]></printWhenExpression>
+			<textField pattern="">
+				<reportElement key="textField" positionType="Float" mode="Opaque" x="36" y="0" width="173" height="27" backcolor="#ccccff"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{Player1Name}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement key="textField" positionType="Float" mode="Opaque" x="208" y="0" width="70" height="27" backcolor="#ccccff"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{Player1MatchPoints}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement key="textField" positionType="Float" mode="Opaque" x="0" y="0" width="36" height="27" backcolor="#ccccff"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{Table}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement key="textField" positionType="Float" mode="Opaque" x="307" y="0" width="173" height="27" backcolor="#ccccff">
+					<printWhenExpression><![CDATA[new Boolean($F{Player2Name} == null)]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["*** BYE ***"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement key="textField" positionType="Float" mode="Opaque" x="307" y="0" width="173" height="27" backcolor="#ccccff">
+					<printWhenExpression><![CDATA[new Boolean($F{Player2Name} != null)]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{Player2Name}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement key="textField" positionType="Float" mode="Opaque" x="479" y="0" width="70" height="27" backcolor="#ccccff"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{Player2MatchPoints}]]></textFieldExpression>
+			</textField>
+		</band>
+		</groupHeader>
+		<groupFooter>
+		<band>
+		</band>
+		</groupFooter>
+	</group>
+	<group name="EvenRow">
+		<groupExpression><![CDATA[$V{REPORT_COUNT}.intValue() % 2 == 0 ? Boolean.TRUE : Boolean.FALSE]]></groupExpression>
+		<groupHeader>
+		<band height="29">
+			<printWhenExpression><![CDATA[$V{REPORT_COUNT}.intValue() % 2 == 0 ? Boolean.TRUE : Boolean.FALSE]]></printWhenExpression>
+			<textField pattern="">
+				<reportElement key="textField-2" positionType="Float" mode="Opaque" x="36" y="0" width="173" height="27"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{Player1Name}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement key="textField-3" positionType="Float" mode="Opaque" x="208" y="0" width="70" height="27"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{Player1MatchPoints}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement key="textField" positionType="Float" mode="Opaque" x="0" y="0" width="36" height="27"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{Table}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement key="textField-2" positionType="Float" mode="Opaque" x="307" y="0" width="173" height="27">
+					<printWhenExpression><![CDATA[new Boolean($F{Player2Name} == null)]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["*** BYE ***"]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement key="textField-2" positionType="Float" mode="Opaque" x="307" y="0" width="173" height="27">
+					<printWhenExpression><![CDATA[new Boolean($F{Player2Name} != null)]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{Player2Name}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement key="textField-3" positionType="Float" mode="Opaque" x="479" y="0" width="70" height="27"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{Player2MatchPoints}]]></textFieldExpression>
+			</textField>
+		</band>
+		</groupHeader>
+		<groupFooter>
+		<band>
+		</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band>
+		</band>
+	</background>
+	<title>
+		<band>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="78" isSplitAllowed="false">
+			<textField evaluationTime="Report" pattern="">
+				<reportElement key="textField" positionType="Float" mode="Opaque" x="0" y="0" width="556" height="39" backcolor="#ccccff"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Verdana" size="16" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{TournamentName} + " - Round " + $P{CurrentRound}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText" positionType="Float" mode="Opaque" x="0" y="40" width="36" height="33"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Table]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText" positionType="Float" mode="Opaque" x="36" y="40" width="173" height="33"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Name]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText" positionType="Float" mode="Opaque" x="208" y="40" width="70" height="33"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Match-
+points]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText" positionType="Float" mode="Opaque" x="307" y="40" width="173" height="33"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Name]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText" positionType="Float" mode="Opaque" x="479" y="40" width="70" height="33"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Match-
+points]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band>
+		</band>
+	</columnHeader>
+	<detail>
+		<band isSplitAllowed="false">
+		</band>
+	</detail>
+	<columnFooter>
+		<band>
+		</band>
+	</columnFooter>
+	<pageFooter>
+		<band height="24">
+			<textField pattern="">
+				<reportElement key="textField" positionType="Float" mode="Opaque" x="412" y="0" width="143" height="24"/>
+				<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[$P{TournamentDate}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement key="textField" positionType="Float" mode="Opaque" x="0" y="0" width="143" height="24"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{TournamentName}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText" positionType="Float" mode="Opaque" x="237" y="0" width="80" height="24"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Verdana" size="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Seatings]]></text>
+			</staticText>
+		</band>
+	</pageFooter>
+	<summary>
+		<band>
+		</band>
+	</summary>
+</jasperReport>
