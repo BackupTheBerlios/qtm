@@ -7,12 +7,15 @@ package org.QTM.app;
 import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
 import org.QTM.control.GfxLabel;
 import org.QTM.control.IconCache;
 import org.QTM.control.LiveSashForm;
 import org.QTM.control.ToolTip;
 import org.QTM.control.ToolTipHandler;
+import org.QTM.data.HintRemovedPlayer;
 import org.QTM.data.Player;
 import org.QTM.data.Result;
 import org.QTM.data.Round;
@@ -72,7 +75,7 @@ import org.eclipse.swt.widgets.ToolItem;
 // TODO Convert to JFace TableViewer/Handling
 // TODO Change to JfaceForms?
 
-public class Application implements ITournamentListener, DisposeListener {
+public class Application implements Observer, DisposeListener {
 	private Controller controller;
 
 	private Shell sShell = null; //  @jve:decl-index=0:visual-constraint="10,10"
@@ -107,7 +110,7 @@ public class Application implements ITournamentListener, DisposeListener {
 		display = d;
 		controller = c;
 
-		controller.addListener(this);
+		controller.getCurrentTournament().addObserver(this);
 	}
 
 	void run() {
@@ -315,7 +318,7 @@ public class Application implements ITournamentListener, DisposeListener {
 			}
 
 			public void focusLost(FocusEvent e) {
-				controller.changeTournamentName(tournamentName.getText());
+				controller.getCurrentTournament().setName(tournamentName.getText());
 			}
 
 		});
@@ -509,9 +512,13 @@ public class Application implements ITournamentListener, DisposeListener {
 		toolBar1 = new ToolBar(parent, SWT.FLAT | SWT.BORDER);
 		ToolItem tool_NewTournament = new ToolItem(toolBar1, SWT.PUSH);
 		tool_NewTournament.setText("New");
+		
+		final Application app = this;
+		
 		tool_NewTournament.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
 				controller.newTournament(sShell);
+				controller.getCurrentTournament().addObserver(app);
 			}
 
 			public void widgetDefaultSelected(SelectionEvent e) {
@@ -535,9 +542,8 @@ public class Application implements ITournamentListener, DisposeListener {
 		tool_SaveTournament.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
 
-				// find control with focus
+				// TODO find control with focus and update data?
 
-				controller.changeTournamentName(tournamentName.getText());
 				controller.saveTournament(sShell);
 			}
 
@@ -564,9 +570,9 @@ public class Application implements ITournamentListener, DisposeListener {
 				Menu menu = (Menu) e.widget;
 				MenuItem[] items = menu.getItems();
 
-				items[0].setEnabled(!controller.hasTournamentStarted()); // new
+				items[0].setEnabled(!controller.getCurrentTournament().hasStarted()); // new
 
-				items[2].setEnabled(!controller.hasTournamentStarted() && tablePlayer.getSelectionCount() == 1); // delete
+				items[2].setEnabled(!controller.getCurrentTournament().hasStarted() && tablePlayer.getSelectionCount() == 1); // delete
 				items[4].setEnabled(tablePlayer.getItemCount() != 0); // find
 			}
 		});
@@ -577,7 +583,7 @@ public class Application implements ITournamentListener, DisposeListener {
 		item.setText("New");
 		item.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				controller.newPlayer();
+				controller.getCurrentTournament().addPlayer("New", 1);
 			}
 		});
 
@@ -593,9 +599,7 @@ public class Application implements ITournamentListener, DisposeListener {
 				if (items.length == 0)
 					return;
 
-				// TODO remove player from data
-				controller.removePlayer((Player) items[0].getData());
-				items[0].dispose();
+				controller.getCurrentTournament().removePlayer((Player) items[0].getData());
 			}
 		});
 
@@ -715,10 +719,10 @@ public class Application implements ITournamentListener, DisposeListener {
 									{
 										switch (column) {
 										case 0:
-											controller.changePlayerName(p, text.getText());
+											controller.getCurrentTournament().changePlayerName(p, text.getText());
 											break;
 										case 1:
-											controller.change_PlayerDCI(p, Integer.parseInt(text.getText()));
+											controller.getCurrentTournament().changePlayerDCI(p, Integer.parseInt(text.getText()));
 											break;
 										}
 									}	
@@ -770,8 +774,17 @@ public class Application implements ITournamentListener, DisposeListener {
 		});
 	}
 
-	public void update(Tournament t, Object hint) {
-		if (hint instanceof HintDirtyFlag || hint instanceof Tournament) {
+	public void update(Observable o, Object arg) {
+		Tournament t = (Tournament)o;
+		
+		updateTournament(t, arg);
+		updatePlayers(t, arg);
+		updateSeatings(t, arg);
+		updateStandings(t, arg);
+	}
+
+	private void updateTournament(Tournament t, Object hint) {
+		if (hint instanceof Tournament) {
 			String name = t.getName();
 
 			if (name != null)
@@ -789,7 +802,7 @@ public class Application implements ITournamentListener, DisposeListener {
 			else
 				name = "QTM SWT: " + name;
 
-			if (t.isDirty())
+			if (t.hasChanged())
 				name = "* " + name;
 
 			sShell.setText(name);
@@ -797,9 +810,21 @@ public class Application implements ITournamentListener, DisposeListener {
 		}
 	}
 	
-	public void updatePlayers(Tournament t, Object hint) {
-
-		if (hint instanceof Player) // added this player
+	private void updatePlayers(Tournament t, Object hint) {
+		if( hint instanceof HintRemovedPlayer)
+		{
+			HintRemovedPlayer hp = (HintRemovedPlayer)hint;
+			Player p = hp.getPlayer();
+			
+			TableItem[] oldItems = tablePlayer.getItems();
+			for (int i = 0; i < oldItems.length; i++) {
+				if (oldItems[i].getData() == p) {
+					oldItems[i].dispose();
+					break;
+				}
+			}
+			
+		} else if (hint instanceof Player) // added/changed this player
 		{
 			Player p = (Player) hint;
 			TableItem ti = null;
@@ -873,14 +898,32 @@ public class Application implements ITournamentListener, DisposeListener {
 	}
 
 	private void updateStandingsTitle() {
-		if(controller.isRoundFinished())
+		if(controller.getCurrentTournament().isRoundFinished())
 			standingsTitle.setText("Final Standings");
 		else
 			standingsTitle.setText("Provisional Standings");
 	}
 	
-	public void updateStandings(Tournament t, Object hint) {
-		if (hint instanceof Player)
+	private void updateStandings(Tournament t, Object hint) {
+		if( hint instanceof HintRemovedPlayer)
+		{
+			HintRemovedPlayer hp = (HintRemovedPlayer)hint;
+			Player p = hp.getPlayer();
+			
+			TableItem[] oldItems = tableStandings.getItems();
+			boolean removed = false;
+			for (int i = 0; i < oldItems.length; i++) {
+				Player fp = (Player) oldItems[i].getData();
+				if (fp == p) {
+					oldItems[i].dispose();
+					removed = true;
+				}
+				else if (removed)
+				{
+					playerItems(oldItems[i], fp, i);					
+				}
+			}
+		} else if (hint instanceof Player)
 		{
 			Player p = (Player) hint;
 			int i;
@@ -894,7 +937,7 @@ public class Application implements ITournamentListener, DisposeListener {
 				}
 			}
 
-			int rank = controller.getPlayerRank(p);
+			int rank = controller.getCurrentTournament().getPlayerRank(p);
 			if(ti == null)
 			{
 				ti = new TableItem(tableStandings, SWT.NULL, rank - 1);				
@@ -1042,7 +1085,7 @@ public class Application implements ITournamentListener, DisposeListener {
 				Menu menu = (Menu) e.widget;
 				MenuItem[] items = menu.getItems();
 
-				items[0].setEnabled(controller.isRoundFinished()); // print
+				items[0].setEnabled(controller.getCurrentTournament().isRoundFinished()); // print
 			}
 		});
 
@@ -1101,11 +1144,11 @@ public class Application implements ITournamentListener, DisposeListener {
 		    button1.addSelectionListener(new SelectionListener() {
 
 				public void widgetSelected(SelectionEvent e) {
-					controller.drop(s.getPlayer1(), button1.getSelection() );
+					controller.getCurrentTournament().dropPlayer(s.getPlayer1(), button1.getSelection() );
 				}
 
 				public void widgetDefaultSelected(SelectionEvent e) {
-					controller.drop(s.getPlayer1(), button1.getSelection());
+					controller.getCurrentTournament().dropPlayer(s.getPlayer1(), button1.getSelection());
 				}
 		    	
 		    });
@@ -1123,11 +1166,11 @@ public class Application implements ITournamentListener, DisposeListener {
 			    button2.addSelectionListener(new SelectionListener() {
 	
 					public void widgetSelected(SelectionEvent e) {
-						controller.drop(s.getPlayer2(), button2.getSelection() );
+						controller.getCurrentTournament().dropPlayer(s.getPlayer2(), button2.getSelection() );
 					}
 	
 					public void widgetDefaultSelected(SelectionEvent e) {
-						controller.drop(s.getPlayer2(), button2.getSelection() );
+						controller.getCurrentTournament().dropPlayer(s.getPlayer2(), button2.getSelection() );
 					}
 			    	
 			    });
@@ -1139,7 +1182,7 @@ public class Application implements ITournamentListener, DisposeListener {
 		}
 	}
 
-	public void updateSeatings(Tournament tournament, Object hint) {
+	private void updateSeatings(Tournament tournament, Object hint) {
 		if (hint instanceof Player) {
 			Player p = (Player) hint;
 			
@@ -1240,8 +1283,8 @@ public class Application implements ITournamentListener, DisposeListener {
 				Menu menu = (Menu) e.widget;
 				MenuItem[] items = menu.getItems();
 
-				items[0].setEnabled(controller.isRoundFinished()); // seatings
-				items[3].setEnabled(!controller.isRoundFinished() && !controller.isRoundClockRunning()); // start clock
+				items[0].setEnabled(controller.getCurrentTournament().isRoundStartable() ); // seatings
+				items[3].setEnabled(!controller.getCurrentTournament().isRoundFinished() && !controller.isRoundClockRunning()); // start clock
 				items[4].setEnabled(controller.isRoundClockRunning()); // stop clock
 				items[6].setEnabled(false); // Delete result
 				
@@ -1252,8 +1295,8 @@ public class Application implements ITournamentListener, DisposeListener {
 					items[6].setEnabled( s.isFinished() ); // seatings
 				}
 
-				items[8].setEnabled(controller.hasTournamentStarted()); // Print seatings
-				items[9].setEnabled(controller.hasTournamentStarted()); // Print seatings
+				items[8].setEnabled(controller.getCurrentTournament().hasStarted()); // Print seatings
+				items[9].setEnabled(controller.getCurrentTournament().hasStarted()); // Print seatings
 
 				// TODO Re-seat only possible if we have not recorded any results yet! && have a round available
 			}
@@ -1293,9 +1336,10 @@ public class Application implements ITournamentListener, DisposeListener {
 
 		item = new MenuItem(popUpMenu, SWT.CASCADE);
 		item.setText("Start round clock");
+		final Application app = this;
 		item.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				controller.startRound(sShell);
+				controller.startRound(sShell, app);
 			}
 		});
 
@@ -1303,7 +1347,7 @@ public class Application implements ITournamentListener, DisposeListener {
 		item.setText("Stop round clock");
 		item.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				controller.stopRound(sShell);
+				controller.stopRound(sShell, app);
 			}
 		});
 
@@ -1320,7 +1364,7 @@ public class Application implements ITournamentListener, DisposeListener {
 					return;
 
 				Seating s = (Seating) items[0].getData();
-				controller.updateMatch( sShell, s, null);
+				controller.getCurrentTournament().updateMatch(s, null);
 			}
 		});
 
@@ -1466,7 +1510,7 @@ public class Application implements ITournamentListener, DisposeListener {
 							if (index >= 0) {
 								Result result = controller.getResult(index);
 
-								controller.updateMatch(sShell, s, result);
+								controller.getCurrentTournament().updateMatch(s, result);
 							}
 						}
 
@@ -1497,7 +1541,7 @@ public class Application implements ITournamentListener, DisposeListener {
 	public void widgetDisposed(DisposeEvent e) {
 	    saveWindowBounds();
 
-	    controller.removeListener(this);
+	    controller.getCurrentTournament().deleteObserver(this);
 
 		colorOrange.dispose();
 		colorRed.dispose();

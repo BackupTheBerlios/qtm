@@ -8,12 +8,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Observable;
 
 /**
  * @author WAHL_O
  * 
  */
-public class Tournament {
+public class Tournament extends Observable {
 
 	String name;
 
@@ -21,14 +22,11 @@ public class Tournament {
 
 	Date date = new Date();
 
-	boolean dirty;
-
 	List rounds = new ArrayList();
 
 	List players = new ArrayList();
 	
 	public Tournament() {
-		setDirty(false);
 	}
 
 	public Date getDate() {
@@ -37,6 +35,8 @@ public class Tournament {
 
 	public void setDate(Date date) {
 		this.date = date;
+		setChanged();
+		notifyObservers( this.date );
 	}
 
 	public String getLocation() {
@@ -45,6 +45,8 @@ public class Tournament {
 
 	public void setLocation(String location) {
 		this.location = location;
+		setChanged();
+		notifyObservers(new HintTournamentLocation(this.location));
 	}
 
 	public String getName() {
@@ -53,14 +55,9 @@ public class Tournament {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public void setDirty(boolean d) {
-		dirty = d;
-	}
-
-	public boolean isDirty() {
-		return dirty;
+		setChanged();
+		
+		notifyObservers( new HintTournamentName(this.name) );
 	}
 
 	public List getPlayersRanked() {
@@ -69,10 +66,30 @@ public class Tournament {
 	}
 
 	public List getPlayers() {
-		return players;
+		return new ArrayList( players );
 	}
 
-	public Player addPlayer(String s, int i) {
+	public void changePlayerName(Player p, String s) {
+		p.setName(s);
+
+		if( players.contains(p) )
+		{
+			setChanged();
+			notifyObservers(p);
+		}
+	}
+
+	public void changePlayerDCI(Player p, int d) {
+		p.setDCI(d);
+
+		if( players.contains(p) )
+		{
+			setChanged();
+			notifyObservers(p);
+		}
+	}
+
+	public void addPlayer(String s, int i) {
 		Player p = new Player();
 		
 		p.setName(s);
@@ -80,17 +97,37 @@ public class Tournament {
 		
 		players.add(p);
 		
-		setDirty(true);
-
-		return p;
+		setChanged();
+		notifyObservers(p);
 	}
 
 	public void removePlayer(Player p) {
-		players.remove(p);
+		if( players.contains(p) )
+		{
+			players.remove(p);
 
-		setDirty(true);
+			setChanged();
+			notifyObservers( new HintRemovedPlayer(p) );
+		}
 	}
 	
+	public void dropPlayer(Player p, boolean b) {
+		p.drop(b);
+		
+		if( players.contains(p) )
+		{
+			setChanged();
+			notifyObservers(p);
+		}
+	}
+	
+	public boolean isRoundFinished() {
+		Round r = getCurrentRound();
+
+		return r == null ? false : r.isFinished();
+	}
+
+
 	public Round getCurrentRound() {
 		
 		if(rounds.isEmpty())
@@ -123,15 +160,42 @@ public class Tournament {
 		if( r.isSeatingPossible() )
 		{
 			rounds.add(r);
-			setDirty(true);
-			
+			setChanged();
+			notifyObservers(r);
 			return r;
 		}
 		
 		return null;
 	}
 
-	public int getRank(Player p) {
-		return getPlayersRanked().indexOf(p) + 1;
+	public int getPlayerRank(Player p) {
+		if(players.contains(p))
+			return getPlayersRanked().indexOf(p) + 1;
+		else
+			return 0;
+	}
+
+	public boolean hasStarted() {
+		return (getCurrentRound() != null);
+	}
+
+	public void updateMatch(Seating s, Result r) {
+		
+		if(r != null)
+			s.finished(r);
+		else
+			s.unfinished();
+		
+		notifyObservers(s);
+		notifyObservers( getCurrentRound() );
+	}
+
+	public boolean isRoundStartable() {
+		Round r = getCurrentRound();
+		
+		if( r != null )
+			return r.isFinished();
+		
+		return players.size() >= 2;
 	}
 }

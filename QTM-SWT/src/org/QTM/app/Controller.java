@@ -5,8 +5,8 @@
 package org.QTM.app;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Observer;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -36,7 +36,6 @@ import com.db4o.query.Query;
  * 
  */
 public class Controller {
-	List listeners = new ArrayList();
 
 	private Tournament tournament;
 
@@ -52,6 +51,10 @@ public class Controller {
 		Db4o.configure().objectClass(Tournament.class).cascadeOnUpdate(true);
 		Db4o.configure().objectClass(Tournament.class).cascadeOnActivate(true);
 		Db4o.configure().objectClass(Tournament.class).updateDepth(2);
+		Db4o.configure().objectClass(Tournament.class).objectField("changed").queryEvaluation(false);
+		Db4o.configure().objectClass(Tournament.class).objectField("obs").queryEvaluation(false);
+		Db4o.configure().objectClass(Tournament.class).objectField("changed").cascadeOnUpdate(false);
+		Db4o.configure().objectClass(Tournament.class).objectField("obs").cascadeOnUpdate(false);
 		
 		Db4o.configure().objectClass(Player.class).cascadeOnActivate(true);
 		Db4o.configure().objectClass(Player.class).cascadeOnUpdate(true);
@@ -78,36 +81,10 @@ public class Controller {
 		db.close();
 	}
 
-	private void update(Object hint) {
-		Iterator it = listeners.iterator();
-
-		while (it.hasNext()) {
-			ITournamentListener tl = (ITournamentListener) it.next();
-
-			tl.update(tournament, hint);
-
-			tl.updatePlayers(tournament, hint);
-
-			tl.updateStandings(tournament, hint);
-
-			tl.updateSeatings(tournament, hint);
-		}
-	}
-
-	public void addListener(ITournamentListener t) {
-		listeners.add(t);
-	}
-
-	public void removeListener(ITournamentListener t) {
-		listeners.remove(t);
-	}
-
 	public void newTournament(Shell shell) {
 		db.deactivate(tournament, Integer.MAX_VALUE);
 		
 		tournament = new Tournament();
-
-		update(tournament);
 	}
 
 	public void openTournament(Shell shell) {
@@ -117,7 +94,6 @@ public class Controller {
 		q.constrain(Tournament.class);
 		q.orderAscending();
 		
-		//		q.descend("name").constrain("one");
 		ObjectSet set = q.execute();
 
 		while (set.hasNext()) {
@@ -141,85 +117,28 @@ public class Controller {
 			
 			tournament = (Tournament) set.next();
 			
-			db.activate(tournament, Integer.MAX_VALUE);
-			
-			update(tournament);
-			
-			Round r = tournament.getCurrentRound();
-			db.activate(r, Integer.MAX_VALUE);
-			if (r != null)
-				update(r);
+			db.activate(tournament, Integer.MAX_VALUE);			
 		}
 	}
 
+	// TODO add auto-save!
 	public void saveTournament(Shell shell) {
-		if (tournament.isDirty() && !"".equals(tournament.getName()))
-		{
-			tournament.setDirty(false);
-			db.set(tournament);
+		db.set(tournament);
 
-			update(new HintDirtyFlag(tournament.isDirty()));
-		}
-	}
-
-	public void changeTournamentName(String s) {
-
-		if (!s.equals(tournament.getName())) {
-			tournament.setName(s);
-
-			tournament.setDirty(true);
-
-			update(tournament);
-		}
+		tournament.notifyObservers(tournament);
 	}
 
 	public void changeTournamentLocation(String s) {
 		if (!s.equals(tournament.getLocation())) {
 			tournament.setLocation(s);
 
-			tournament.setDirty(true);
-
-			update(tournament);
+			tournament.notifyObservers(tournament);
 		}
 	}
 
-	public void changePlayerName(Player p, String s) {
-		p.setName(s);
-
-		tournament.setDirty(true);
-		update(p);
-		update(new HintDirtyFlag(tournament.isDirty()));
-	}
-
-	public void change_PlayerDCI(Player p, int d) {
-		p.setDCI(d);
-
-		tournament.setDirty(true);
-		update(p);
-		update(new HintDirtyFlag(tournament.isDirty()));
-	}
-
-	public void newPlayer() {
-		Player p = tournament.addPlayer("NewKid", 1);
-
-		tournament.setDirty(true);
-		update(p);
-		update(new HintDirtyFlag(tournament.isDirty()));
-	}
-
-	public void removePlayer(Player p) {
-		tournament.removePlayer(p);
-
-		tournament.setDirty(true);
-		update(new HintDirtyFlag(tournament.isDirty()));
-	}
-
-	public boolean hasTournamentStarted() {
-		Round r = tournament.getCurrentRound();
-	
-		return (r != null);
-	}
-
+	// TODO cache final standings per round and offer to print them
+	// TODO autogenerate after round has been finalized
+	// TOOD remove from cache after round reset to non finalized!
 	public void printCurrentStandings(Shell shell) {
 		ReportGenerator plp = new ReportGenerator("Standings", preferences.getString("standingsReport") );
 				
@@ -256,39 +175,12 @@ public class Controller {
 		}
 	}
 
-	public boolean isRoundFinished() {
-		Round r = tournament.getCurrentRound();
-
-		if (r == null)
-			return tournament.getPlayers().size() >= 2;
-
-		return r.isFinished();
-	}
-
-	public void drop(Player player, boolean b) {
-		player.drop(b);
-		
-		tournament.setDirty(true);
-		update(new HintDirtyFlag(tournament.isDirty()));
-		update(player);
-	}
-	
 	public void nextRound(Shell shell) {
-		if (isRoundFinished()) {
-			Round r = tournament.nextRound();
-
-			if( r != null)
-			{
-				tournament.setDirty(true);
-				update(new HintDirtyFlag(tournament.isDirty()));
-				update(r);
-			}
-			else
-			{
-				MessageBox messageBox = new MessageBox(shell, SWT.OK | SWT.ICON_WARNING);
-				messageBox.setMessage("Seating is not possible.");
-				messageBox.open();
-			}
+		if( tournament.nextRound() == null)
+		{
+			MessageBox messageBox = new MessageBox(shell, SWT.OK | SWT.ICON_WARNING);
+			messageBox.setMessage("Seating is not possible.");
+			messageBox.open();
 		}
 	}
 
@@ -297,9 +189,12 @@ public class Controller {
 		
 		private long startTime;
 		
-		public RoundTimerTask(Display d) {
+		private Observer obs;
+		
+		public RoundTimerTask(Display d, Observer o) {
 			super();
 			display = d;
+			obs = o;
 			startTime = System.currentTimeMillis();
 		}
 
@@ -307,56 +202,36 @@ public class Controller {
 			if (!display.isDisposed()) {
 				display.asyncExec(new Runnable() {
 					public void run() {
-						update(new HintElapsedRoundTime(System.currentTimeMillis() - startTime));
+						obs.update(tournament, new HintElapsedRoundTime(System.currentTimeMillis() - startTime));
 					}
 				});
 			}
 		}
 	}
 	
-	public void startRound(Shell shell) {
+	public void startRound(Shell shell, Observer o) {
 		if(timer == null)
 		{
 	        timer = new Timer();
-	        timer.schedule(new RoundTimerTask( shell.getDisplay() ),
+	        timer.schedule(new RoundTimerTask( shell.getDisplay(), o ),
 		               1000,   // initial delay
 		               1000);  // subsequent rate
 		}
 	}
 
-	public void stopRound(Shell shell) {
+	public void stopRound(Shell shell, Observer o) {
 		
 		if(timer != null)
 		{
 	        timer.cancel();
 	        timer = null;
 	        
-	        update( new HintElapsedRoundTime(0) );
+	        o.update(tournament, new HintElapsedRoundTime(0) );
 		}
 	}
 	
 	public boolean isRoundClockRunning() {
 		return timer != null;
-	}
-
-	public void updateMatch(Shell shell, Seating s, Result r) {
-		
-		if(r != null)
-			s.finished(r);
-		else
-			s.unfinished();
-		
-		if(isRoundFinished() && isRoundClockRunning())
-			stopRound(shell);
-		
-		tournament.setDirty(true);
-		update(new HintDirtyFlag(tournament.isDirty()));
-		update(s);
-		update( tournament.getCurrentRound() );
-	}
-
-	public int getPlayerRank(Player p) {
-		return tournament.getRank(p);
 	}
 
 	static Result[] best_of_three =  {
@@ -403,5 +278,9 @@ public class Controller {
 
 	public Result getResult(int index) {
 		return best_of_three[index];
+	}
+
+	public Tournament getCurrentTournament() {
+		return tournament;
 	}
 }
