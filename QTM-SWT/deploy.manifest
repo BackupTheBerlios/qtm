@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Main-Class: org.QTM.app.Startup
+Class-Path: swt.jar bsh-1.3.0.jar commons-beanutils-1.5.jar commons-collections-2.1.jar commons-digester-1.3.jar commons-logging-1.0.2.jar commons-logging-api-1.0.2.jar db4o-4.2-java1.4.jar itext-1.01.jar jasperreports-0.6.3.jar poi-2.0-final-20040126.jar swtjasperviewer-1.0.1.jar xalan.jar xercesImpl.jar xmlParserAPIs.jar jface.jar runtime.jar osgi.jar
+

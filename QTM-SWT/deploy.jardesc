@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jardesc>
+    <jar path="QTM-SWT/deploy/QTM.jar"/>
+    <options overwrite="false" compress="false" exportErrors="false" exportWarnings="false" saveDescription="true" descriptionLocation="/QTM-SWT/deploy.jardesc" useSourceFolders="false" buildIfNeeded="true"/>
+    <manifest manifestVersion="1.0" usesManifest="true" reuseManifest="false" saveManifest="false" generateManifest="false" manifestLocation="/QTM-SWT/deploy.manifest" mainClassHandleIdentifier="=QTM-SWT/src&lt;org.QTM.app{Startup.java[Startup">
+        <sealing sealJar="false">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportOutputFolder="false" exportJavaFiles="false">
+        <file path="/QTM-SWT/src/reports/Seatings.jasper"/>
+        <javaElement handleIdentifier="=QTM-SWT/src&lt;org.QTM.data"/>
+        <javaElement handleIdentifier="=QTM-SWT/src&lt;org.QTM.core"/>
+        <file path="/QTM-SWT/src/reports/Standings.jasper"/>
+        <file path="/QTM-SWT/src/reports/ResultSlips.jasper"/>
+        <javaElement handleIdentifier="=QTM-SWT/src&lt;org.QTM.control"/>
+        <file path="/QTM-SWT/src/images/Q Bubble 16x16.gif"/>
+        <javaElement handleIdentifier="=QTM-SWT/src&lt;org.QTM.app"/>
+    </selectedElements>
+</jardesc>
