@@ -219,9 +219,7 @@ public class Controller {
 	}
 
 	public void printCurrentStandings(Shell shell) {
-		String curDir = System.getProperty("user.dir");
-		
-		ReportGenerator plp = new ReportGenerator("Standings", curDir + preferences.STANDING_REPORT_PFILENAME );
+		ReportGenerator plp = new ReportGenerator("Standings", preferences.STANDING_REPORT_PFILENAME );
 				
 		JasperPrint jasperPrint = plp.print(tournament, tournament.getPlayersRanked());
 		
@@ -233,9 +231,7 @@ public class Controller {
 	}
 
 	public void printResultSlips(Shell shell) {
-		String curDir = System.getProperty("user.dir");
-		
-		ReportGenerator plp = new ReportGenerator("ResultSlips", curDir + preferences.RESULTSLIPS_REPORT_PFILENAME );
+		ReportGenerator plp = new ReportGenerator("ResultSlips", preferences.RESULTSLIPS_REPORT_PFILENAME );
 				
 		JasperPrint jasperPrint = plp.print(tournament, tournament.getCurrentRound().getCompleteSeatings() );
 
@@ -247,9 +243,7 @@ public class Controller {
 	}
 
 	public void printSeatings(Shell shell) {
-		String curDir = System.getProperty("user.dir");
-		
-		ReportGenerator plp = new ReportGenerator("Seatings", curDir + preferences.SEATING_REPORT_PFILENAME );
+		ReportGenerator plp = new ReportGenerator("Seatings", preferences.SEATING_REPORT_PFILENAME );
 				
 		JasperPrint jasperPrint = plp.print(tournament, tournament.getCurrentRound().getSortedSeatings());
 		

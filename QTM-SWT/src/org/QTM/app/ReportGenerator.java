@@ -4,6 +4,7 @@
  */
 package org.QTM.app;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -40,7 +41,13 @@ public class ReportGenerator {
 		JasperPrint jasperPrint = null;
 		try {
 			// First, load JasperDesign from XML and compile it into JasperReport
-			JasperReport jasperReport = (JasperReport) JRLoader.loadObject(reportFile);
+			InputStream stream = ReportGenerator.class.getResourceAsStream(reportFile);
+			if(stream == null)
+				return null;
+			
+			JasperReport jasperReport = (JasperReport) JRLoader.loadObject(stream);
+			if(jasperReport == null)
+				return null;
 
 			// Second, create a map of parameters to pass to the report.
 			Map parameters = new HashMap();
