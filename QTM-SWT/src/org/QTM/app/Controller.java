@@ -15,6 +15,7 @@ import net.sf.jasperreports.engine.JasperPrint;
 import org.QTM.control.JasperViewDialog;
 import org.QTM.control.OpenDialog;
 import org.QTM.data.Player;
+import org.QTM.data.Result;
 import org.QTM.data.Round;
 import org.QTM.data.Seating;
 import org.QTM.data.Tournament;

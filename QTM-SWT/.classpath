@@ -10,6 +10,5 @@
 	<classpathentry kind="lib" path="C:/eclipse/plugins/org.eclipse.osgi_3.0.1/osgi.jar"/>
 	<classpathentry kind="src" path="reports"/>
 	<classpathentry sourcepath="D:/DATA/Wahl_o/Workspace/db4o-4.1/src/db4o-4.1-src.zip" kind="lib" path="lib/db4o-4.1-java1.4.jar"/>
-	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

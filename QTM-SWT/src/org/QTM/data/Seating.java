@@ -4,7 +4,6 @@
  */
 package org.QTM.data;
 
-import org.QTM.app.Result;
 
 /**
  * @author WAHL_O

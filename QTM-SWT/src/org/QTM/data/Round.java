@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import org.QTM.app.Result;
 
 /**
  * @author WAHL_O

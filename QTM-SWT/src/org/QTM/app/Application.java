@@ -13,6 +13,7 @@ import org.QTM.control.LiveSashForm;
 import org.QTM.control.ToolTip;
 import org.QTM.control.ToolTipHandler;
 import org.QTM.data.Player;
+import org.QTM.data.Result;
 import org.QTM.data.Round;
 import org.QTM.data.Seating;
 import org.QTM.data.Tournament;

@@ -2,7 +2,7 @@
  * Created on 09.01.2005
  *
  */
-package org.QTM.app;
+package org.QTM.data;
 
 /**
  * @author WAHL_O
