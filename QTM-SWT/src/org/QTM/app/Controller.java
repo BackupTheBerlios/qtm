@@ -45,7 +45,7 @@ public class Controller {
 			tournament = factory.getTournament(lastTournament);
 		}	
 
-		// Prevent against improper shut-down...
+		// Protect against improper shut-down...
 		PreferenceLoader.getPreferenceStore().setValue("lastTournament", "");
 	}
 
