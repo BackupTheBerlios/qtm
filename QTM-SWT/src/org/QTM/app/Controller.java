@@ -16,7 +16,6 @@ import org.QTM.control.OpenDialog;
 import org.QTM.data.Result;
 import org.QTM.data.Tournament;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.preference.PreferenceStore;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
@@ -28,23 +27,33 @@ import org.eclipse.swt.widgets.Shell;
  */
 public class Controller {
 
-	Tournament tournament = null;
-
-	PreferenceStore preferences;
+	Tournament tournament;
 
 	Timer timer = null;
 
 	ItemFactory factory;
 
-	public Controller(PreferenceStore p) {
-		preferences = p;
-
+	public Controller() {
 		factory = new ItemFactory();
 
-		tournament = factory.createTournament();
+		String lastTournament = PreferenceLoader.getPreferenceStore().getString("lastTournament");
+		
+		if(lastTournament.equals(""))
+			tournament = factory.createTournament();
+		else
+		{
+			tournament = factory.getTournament(lastTournament);
+		}	
+
+		// Prevent against improper shut-down...
+		PreferenceLoader.getPreferenceStore().setValue("lastTournament", "");
 	}
 
 	public void dispose() {
+		// going down - remember last tournament
+		if(tournament.getName() != null)
+			PreferenceLoader.getPreferenceStore().setValue("lastTournament", tournament.getName());
+
 		factory.dispose();
 	}
 
@@ -78,7 +87,7 @@ public class Controller {
 	// TODO autogenerate after round has been finalized
 	// TOOD remove from cache after round reset to non finalized!
 	public void printCurrentStandings(Shell shell) {
-		ReportGenerator plp = new ReportGenerator("Standings", preferences
+		ReportGenerator plp = new ReportGenerator("Standings", PreferenceLoader.getPreferenceStore()
 				.getString("standingsReport"));
 
 		JasperPrint jasperPrint = plp.print(tournament, tournament
@@ -91,7 +100,7 @@ public class Controller {
 	}
 
 	public void printResultSlips(Shell shell) {
-		ReportGenerator plp = new ReportGenerator("ResultSlips", preferences
+		ReportGenerator plp = new ReportGenerator("ResultSlips", PreferenceLoader.getPreferenceStore()
 				.getString("resultSlipsReport"));
 
 		JasperPrint jasperPrint = plp.print(tournament, tournament
@@ -104,7 +113,7 @@ public class Controller {
 	}
 
 	public void printSeatings(Shell shell) {
-		ReportGenerator plp = new ReportGenerator("Seatings", preferences
+		ReportGenerator plp = new ReportGenerator("Seatings", PreferenceLoader.getPreferenceStore()
 				.getString("seatingsReport"));
 
 		JasperPrint jasperPrint = plp.print(tournament, tournament

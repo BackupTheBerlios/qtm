@@ -217,6 +217,7 @@ public class PreferenceLoader {
 
 	pS.setDefault( "tournamentDB", VersionInfo.getHomeDirectory() + "Tournament.db");
 	pS.setDefault( "localPlayersDB", VersionInfo.getHomeDirectory() + "LocalPlayers.db");
+	pS.setDefault( "lastTournament", "");
 
 	pS.setDefault( "standingsReport", "/reports/Standings.jasper");
 	pS.setDefault( "seatingsReport", "/reports/Seatings.jasper");

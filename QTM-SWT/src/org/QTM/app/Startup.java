@@ -47,13 +47,14 @@ public class Startup {
         
 		initializeResources();
 
-		Controller controller = new Controller(PreferenceLoader.getPreferenceStore());
+		Controller controller = new Controller();
 		Application application = new Application(display, controller);
 		application.createSShell();
 		application.run();
 
 		IconCache.dispose();
 		controller.dispose();
+		PreferenceLoader.saveStore();
 		
 		exit(display, 0);
 	}

@@ -116,7 +116,8 @@ public class Application implements Observer, DisposeListener {
 
 	void run() {
 		sShell.open();
-
+		update(controller.getCurrentTournament(), controller.getCurrentTournament());
+		
 		while (!sShell.isDisposed()) {
 			if (!display.readAndDispatch())
 				display.sleep();

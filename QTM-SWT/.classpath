@@ -2,12 +2,12 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="con" path="SWT_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/swtjasperviewer-1.0.1.jar"/>
-	<classpathentry kind="var" path="LIB_JASPERREPORTS"/>
 	<classpathentry kind="var" path="JFACE"/>
 	<classpathentry kind="lib" path="C:/eclipse/plugins/org.eclipse.core.runtime_3.0.1/runtime.jar"/>
 	<classpathentry kind="lib" path="C:/eclipse/plugins/org.eclipse.osgi_3.0.1/osgi.jar"/>
 	<classpathentry sourcepath="D:/DATA/Wahl_o/Workspace/db4o-4.2/src/db4o-4.2-src.zip" kind="lib" path="lib/db4o-4.2-java1.4.jar"/>
+	<classpathentry kind="lib" path="lib/swtjasperviewer-1.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/jasperreports-0.6.3.jar"/>
+	<classpathentry kind="var" path="ECLIPSE_HOME/plugins/org.eclipse.swt.win32_3.0.1/ws/win32/swt.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
