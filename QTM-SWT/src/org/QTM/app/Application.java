@@ -8,6 +8,7 @@ import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.List;
 
+import org.QTM.control.GfxLabel;
 import org.QTM.control.IconCache;
 import org.QTM.control.LiveSashForm;
 import org.QTM.control.ToolTip;
@@ -35,7 +36,6 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -66,7 +66,6 @@ import org.eclipse.swt.widgets.ToolItem;
 
 // TODO Break up in different composites for clearar handling
 // TODO Convert to JFace TableViewer/Handling
-// TODO Add Images in resources
 // TODO Change to JfaceForms?
 
 public class Application implements ITournamentListener {
@@ -97,6 +96,8 @@ public class Application implements ITournamentListener {
 	private Color colorOrange;
 	private Color colorRed;
 
+	private Color colorLabelDark;
+	private Color colorLabelLight;
 	
 	public Application(Display d, Controller c) {
 		display = d;
@@ -155,6 +156,11 @@ public class Application implements ITournamentListener {
 	}
 
 	private void createComposite() {
+		colorOrange = new Color(display, 255,189,0);
+		colorRed = new Color(display, 248,11,16);
+		colorLabelDark = display.getSystemColor(SWT.COLOR_TITLE_BACKGROUND);
+		colorLabelLight = display.getSystemColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT);
+
 		Composite composite = new Composite(sShell, SWT.NONE);
 
 		GridLayout layout = new GridLayout();
@@ -242,17 +248,12 @@ public class Application implements ITournamentListener {
 		layout.numColumns = 2;
 		top_left.setLayout(layout);
 
-		CLabel label = new CLabel(top_left, SWT.NONE);
+		GfxLabel label = new GfxLabel(top_left, SWT.NONE, colorLabelLight, colorLabelDark);
 		GridData gid = new GridData(GridData.FILL_HORIZONTAL
 				| GridData.VERTICAL_ALIGN_CENTER);
 		gid.horizontalSpan = 2;
 		label.setLayoutData(gid);
 
-		label.setForeground(Display.getDefault()
-				.getSystemColor(SWT.COLOR_WHITE));
-		label.setBackground(Display.getDefault().getSystemColor(
-				SWT.COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT));
-		label.setFont(new Font(Display.getDefault(), "Verdana", 16, SWT.BOLD));
 		label.setText("Tournament");
 
 		Point size = label.computeSize(SWT.DEFAULT, SWT.DEFAULT);
@@ -349,16 +350,10 @@ public class Application implements ITournamentListener {
 		layout.marginWidth = 0;
 		top_right.setLayout(layout);
 
-		CLabel label = new CLabel(top_right, SWT.NONE);
+		CLabel label = new GfxLabel(top_right, SWT.NONE, colorLabelDark, colorLabelLight);
 		GridData gridData = new GridData(GridData.FILL_HORIZONTAL
 				| GridData.VERTICAL_ALIGN_CENTER);
 		label.setLayoutData(gridData);
-		label.setForeground(Display.getDefault().getSystemColor(
-				SWT.COLOR_WHITE));
-		label.setBackground(Display.getDefault().getSystemColor(
-				SWT.COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT));
-		label.setFont(new org.eclipse.swt.graphics.Font(Display.getDefault(),
-				"Verdana", 16, SWT.BOLD));
 		label.setText("Player");
 		
 		Point size = label.computeSize(SWT.DEFAULT, SWT.DEFAULT);
@@ -399,16 +394,10 @@ public class Application implements ITournamentListener {
 		layout.marginWidth = 0;
 		bottom_left.setLayout(layout);
 
-		standingsTitle = new CLabel(bottom_left, SWT.NONE);
+		standingsTitle = new GfxLabel(bottom_left, SWT.NONE, colorLabelDark, colorLabelLight);
 		GridData gridData = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_CENTER);
 		standingsTitle.setLayoutData(gridData);
 		
-		standingsTitle.setForeground(Display.getDefault().getSystemColor(
-				SWT.COLOR_WHITE));
-		standingsTitle.setBackground(Display.getDefault().getSystemColor(
-				SWT.COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT));
-		standingsTitle.setFont(new org.eclipse.swt.graphics.Font(Display.getDefault(),
-				"Verdana", 16, SWT.BOLD));
 		standingsTitle.setText("Standings");
 
 		Point size = standingsTitle.computeSize(SWT.DEFAULT, SWT.DEFAULT);
@@ -452,18 +441,13 @@ public class Application implements ITournamentListener {
 		layout.makeColumnsEqualWidth = false;
 		bottom_right.setLayout(layout);
 
-		roundTitle = new CLabel(bottom_right, SWT.NONE);
+		roundTitle = new GfxLabel(bottom_right, SWT.NONE, colorLabelDark, colorLabelLight);
 		GridData gridData = new GridData();
 		gridData.grabExcessHorizontalSpace = true;
 		gridData.horizontalAlignment = SWT.FILL;
 		gridData.verticalAlignment = SWT.CENTER;
 		
 		roundTitle.setLayoutData(gridData);
-		roundTitle.setForeground(Display.getDefault().getSystemColor(
-				SWT.COLOR_WHITE));
-		roundTitle.setBackground(Display.getDefault().getSystemColor(
-				SWT.COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT));
-		roundTitle.setFont(new Font(Display.getDefault(), "Verdana", 16, SWT.BOLD));
 		roundTitle.setText("Round");
 
 		roundTitle.addMouseListener(new MouseListener() {
@@ -484,15 +468,12 @@ public class Application implements ITournamentListener {
 
 		});
 
-		roundTimer = new CLabel(bottom_right, SWT.CENTER);
+		roundTimer = new GfxLabel(bottom_right, SWT.CENTER, colorLabelLight, colorLabelDark);
 		gridData = new GridData();
 		gridData.horizontalAlignment = SWT.FILL;
 		gridData.verticalAlignment = SWT.CENTER;
 		roundTimer.setLayoutData(gridData);
 		
-		roundTimer.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_WHITE));
-		roundTimer.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
-		roundTimer.setFont(new Font(Display.getDefault(), "Verdana", 16, SWT.BOLD));
 		roundTimer.setText("00:00");
 
 		Point size1 = roundTitle.computeSize(SWT.DEFAULT, SWT.DEFAULT);
@@ -500,9 +481,6 @@ public class Application implements ITournamentListener {
 		parent.setData("RIGHT_MIN_WIDTH", new Integer(size1.x + size2.x) );
 		sashFormRow.setData("MIN_HEIGHT", new Integer(Math.max(size1.y, size2.y)) );
 	
-		colorOrange = new Color(Display.getDefault(), 255,189,0);
-		colorRed = new Color(Display.getDefault(), 248,11,16);
-		
 		Label separator = new Label(bottom_right, SWT.HORIZONTAL | SWT.SEPARATOR);
 		gridData = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_CENTER);
 		gridData.horizontalSpan = 2;
